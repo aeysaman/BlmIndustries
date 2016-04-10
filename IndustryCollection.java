@@ -37,7 +37,7 @@ public class IndustryCollection {
 		System.out.println("gathering");
 		ic.gather();
 		System.out.println("printing");
-		ic.printPairings();
+		ic.exportPairings();
 	}
 	public IndustryCollection(){
 		this.pairings = new HashMap<String, String>();
@@ -110,7 +110,7 @@ public class IndustryCollection {
 			req.getElement("securities").appendValue(s);
 		return req;
 	}
-	public void printPairings(){
+	public void exportPairings(){
 		try {
 			BufferedWriter write = new BufferedWriter(new FileWriter(output));
 			for(String x: this.pairings.keySet()){
