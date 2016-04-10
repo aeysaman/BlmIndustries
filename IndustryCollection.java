@@ -12,6 +12,7 @@ import java.util.Scanner;
 import java.util.Set;
 
 import com.bloomberglp.blpapi.CorrelationID;
+import com.bloomberglp.blpapi.Element;
 import com.bloomberglp.blpapi.Event;
 import com.bloomberglp.blpapi.Message;
 import com.bloomberglp.blpapi.MessageIterator;
@@ -25,34 +26,48 @@ import gather.tools;
 public class IndustryCollection {
 	static File input = new File("allSecurities.csv");
 	static File output = new File("industries.csv");
+	
+	Map<String, String> pairings;
+	Set<String> securities;
+	
 	public static void main(String[] args) {
-		Set<String> securities = readSecurities();
-		Map<String, String> pairings  = gather(securities);
-		printMap(pairings);
-			
+		IndustryCollection ic = new IndustryCollection();
+		System.out.println("reading");
+		ic.securities = readSecurities();
+		System.out.println("gathering");
+		ic.gather();
+		System.out.println("printing");
+		ic.printPairings();
 	}
-	public static Map<String, String> gather(Set<String> securities){
-		Map<String,String> result = new HashMap<String, String>();
+	public IndustryCollection(){
+		this.pairings = new HashMap<String, String>();
+	}
+	public void gather(){
+		System.out.println("set up");
 		Session session =Api.setupSession();
 		Service service = session.getService("//blp/refdata");
-		
+
+		System.out.println("forming request");
 		//form requests
 		Request req = formRequest(service, securities);
-		
+
+		System.out.println("sending request");
 		//send requests
 		try {
 			session.sendRequest(req, new CorrelationID());
 		} catch (IOException e) {
 			System.out.println("error in sending request");
 		}
-		
+
+		System.out.println("collecting");
 		//collect requests
-		
-		return result;
+		collectEvents(session);
+
 	}
-	public static void collectEvents(Session sess){
+	public void collectEvents(Session sess){
 		boolean keepLooping = true;
 		while(keepLooping){
+			System.out.print(".");
 			Event event = null;
 			try {
 				event = sess.nextEvent(); 
@@ -62,44 +77,46 @@ public class IndustryCollection {
 				e.printStackTrace();
 			}
 			switch (event.eventType().intValue()){
-				case Event.EventType.Constants.RESPONSE: // final event
-					keepLooping = false; // fall through
-				case Event.EventType.Constants.PARTIAL_RESPONSE:
-					handleResponseEvent(event);
-					break;
-				default:
-					Api.handleOtherEvent(event);
-					break;
+			case Event.EventType.Constants.RESPONSE: // final event
+				keepLooping = false; // fall through
+			case Event.EventType.Constants.PARTIAL_RESPONSE:
+				handleResponseEvent(event);
+				break;
+			default:
+				Api.handleOtherEvent(event);
+				break;
 			}
 		}
 	}
-	public static void handleResponseEvent(Event e){
+	public void handleResponseEvent(Event e){
 		MessageIterator it = e.messageIterator();
 		while(it.hasNext()){
-			Message m = it.next();
-			try{
-				m.print(System.out);
-			}
-			catch(Exception exc){
-				System.out.println("error in processing message");
+			Message message = it.next();
+			Element securityDataArray = message.getElement("securityData");
+
+			for( int i = 0; i<securityDataArray.numValues(); i++){
+				Element securityData = securityDataArray.getValueAsElement(i);
+				String name = securityData.getElementAsString("security");
+				Element fieldData = securityData.getElement("fieldData");
+				String industry = fieldData.getElementAsString("INDUSTRY_SECTOR");
+				this.pairings.put(name, industry);
 			}
 		}
 	}
 	public static Request formRequest(Service service, Collection<String> foo){
-		Request req = service.createRequest("HistoricalDataRequest");
-		req.getElement("fields").appendValue("industry");
+		Request req = service.createRequest("ReferenceDataRequest");
+		req.getElement("fields").appendValue("INDUSTRY_SECTOR");
 		for(String s: foo)
 			req.getElement("securities").appendValue(s);
-		req.set("startDate", "20000101");
-		req.set("endDate", "20151231");
 		return req;
 	}
-	public static void printMap(Map<String, String> foo){
+	public void printPairings(){
 		try {
 			BufferedWriter write = new BufferedWriter(new FileWriter(output));
-			for(String x: foo.keySet())
-				write.write(x + "," + foo.get(x) + "\n");
-				
+			for(String x: this.pairings.keySet()){
+				String industry = pairings.get(x).replace(',', ';');
+				write.write(x + "," + industry + "\n");
+			}
 			write.close();
 			System.out.println("All Done!");
 		} catch (IOException e) {
