@@ -1,4 +1,4 @@
-package industries;
+package industry;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -20,8 +20,8 @@ import com.bloomberglp.blpapi.Request;
 import com.bloomberglp.blpapi.Service;
 import com.bloomberglp.blpapi.Session;
 
-import gather.Api;
-import gather.tools;
+import api.Api;
+import api.tools;
 
 public class IndustryCollection {
 	static File input = new File("allSecurities.csv");
