@@ -1,4 +1,4 @@
-package industries;
+package industry;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import gather.tools;
+import general.Read;
 
 public class IndustrySplit {
 	static File industryInput = new File("industries.csv");
@@ -26,11 +26,12 @@ public class IndustrySplit {
 		IndustrySplit foo = new IndustrySplit();
 		
 		System.out.println("gathering industries");
-		foo.industries = tools.readCSVtoMap(industryInput);
+		foo.industries = Read.readCSVtoMap(industryInput);
 		
 		System.out.println("gathering data");
-		foo.data = tools.readGatheredData(dataInput);
-		foo.header = tools.getFirstLine(dataInput);
+		//?????????????????
+		//foo.data = Read.readGatheredData(dataInput);
+		//foo.header = Read.getFirstLine(dataInput);
 		
 		System.out.println("exporting");
 		foo.export();

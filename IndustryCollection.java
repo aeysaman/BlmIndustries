@@ -6,9 +6,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Scanner;
 import java.util.Set;
 
 import com.bloomberglp.blpapi.CorrelationID;
@@ -21,8 +19,7 @@ import com.bloomberglp.blpapi.Service;
 import com.bloomberglp.blpapi.Session;
 
 import api.Api;
-import api.tools;
-
+import general.Read;
 public class IndustryCollection {
 	static File input = new File("allSecurities.csv");
 	static File output = new File("industries.csv");
@@ -33,11 +30,11 @@ public class IndustryCollection {
 	public static void main(String[] args) {
 		IndustryCollection ic = new IndustryCollection();
 		System.out.println("reading");
-		ic.securities = readSecurities();
+		ic.securities = Read.readSecurities(input);
 		System.out.println("gathering");
 		ic.gather();
 		System.out.println("printing");
-		ic.exportPairings();
+		ic.printPairings();
 	}
 	public IndustryCollection(){
 		this.pairings = new HashMap<String, String>();
@@ -110,7 +107,7 @@ public class IndustryCollection {
 			req.getElement("securities").appendValue(s);
 		return req;
 	}
-	public void exportPairings(){
+	public void printPairings(){
 		try {
 			BufferedWriter write = new BufferedWriter(new FileWriter(output));
 			for(String x: this.pairings.keySet()){
@@ -123,17 +120,5 @@ public class IndustryCollection {
 			System.out.println("error in printing");
 		}
 	}
-	public static Set<String> readSecurities(){
-		Set<String> result = new HashSet<String>();
-		Scanner scan = tools.openScan(input);
-		scan.nextLine();
-		while(scan.hasNextLine()){
-			String[] line = scan.nextLine().split(",");
-			for(String s: line){
-				if(s.length()>5)
-					result.add(s);
-			}
-		}
-		return result;
-	}
+	
 }
